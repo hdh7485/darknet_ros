@@ -551,10 +551,13 @@ void YoloObjectDetector::yolo()
       fetch_thread.join();
       detect_thread.join();
       ++count;
-      if (!isNodeRunning()) {
-        demoDone_ = true;
-      }
+      //if (!isNodeRunning()) {
+      //  demoDone_ = true;
+      //}
       isActionImage_ = false;
+    }
+    else if (!isNodeRunning()) {
+      demoDone_ = true;
     }
   }
 
