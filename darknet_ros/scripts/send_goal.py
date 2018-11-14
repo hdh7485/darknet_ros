@@ -20,7 +20,7 @@ def darknet_client():
     # listening for goals.
     client.wait_for_server()
 
-    src_img = cv2.imread("my_video-8_406.jpg")
+    src_img = cv2.imread("/home/hdh7485/Desktop/my_video-8_406.jpg")
     bridge = CvBridge()
     ros_img = bridge.cv2_to_imgmsg(src_img, "bgr8")
     # Creates a goal to send to the action server.

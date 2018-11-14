@@ -211,6 +211,7 @@ class YoloObjectDetector
   bool isNodeRunning_ = true;
   boost::shared_mutex mutexNodeStatus_;
 
+  bool isActionImage_ = false;
   int actionId_;
   boost::shared_mutex mutexActionStatus_;
 
@@ -244,6 +245,8 @@ class YoloObjectDetector
   bool getImageStatus(void);
 
   bool isNodeRunning(void);
+
+  bool isActionImage(void);
 
   void *publishInThread();
 };

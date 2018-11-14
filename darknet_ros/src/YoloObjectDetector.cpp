@@ -201,6 +201,7 @@ void YoloObjectDetector::cameraCallback(const sensor_msgs::ImageConstPtr& msg)
     {
       boost::unique_lock<boost::shared_mutex> lockImageStatus(mutexImageStatus_);
       imageStatus_ = true;
+      isActionImage_ = false;
     }
     frameWidth_ = cam_image->image.size().width;
     frameHeight_ = cam_image->image.size().height;
@@ -233,6 +234,7 @@ void YoloObjectDetector::checkForObjectsActionGoalCB()
     {
       boost::unique_lock<boost::shared_mutex> lockImageCallback(mutexActionStatus_);
       actionId_ = imageActionPtr->id;
+      isActionImage_ = true;
     }
     {
       boost::unique_lock<boost::shared_mutex> lockImageStatus(mutexImageStatus_);
@@ -530,26 +532,29 @@ void YoloObjectDetector::yolo()
   demoTime_ = what_time_is_it_now();
 
   while (!demoDone_) {
-    buffIndex_ = (buffIndex_ + 1) % 3;
-    fetch_thread = std::thread(&YoloObjectDetector::fetchInThread, this);
-    detect_thread = std::thread(&YoloObjectDetector::detectInThread, this);
-    if (!demoPrefix_) {
-      fps_ = 1./(what_time_is_it_now() - demoTime_);
-      demoTime_ = what_time_is_it_now();
-      if (viewImage_) {
-        displayInThread(0);
+    if (isActionImage()){
+      buffIndex_ = (buffIndex_ + 1) % 3;
+      fetch_thread = std::thread(&YoloObjectDetector::fetchInThread, this);
+      detect_thread = std::thread(&YoloObjectDetector::detectInThread, this);
+      if (!demoPrefix_) {
+        fps_ = 1./(what_time_is_it_now() - demoTime_);
+        demoTime_ = what_time_is_it_now();
+        if (viewImage_) {
+          displayInThread(0);
+        }
+        publishInThread();
+      } else {
+        char name[256];
+        sprintf(name, "%s_%08d", demoPrefix_, count);
+        save_image(buff_[(buffIndex_ + 1) % 3], name);
       }
-      publishInThread();
-    } else {
-      char name[256];
-      sprintf(name, "%s_%08d", demoPrefix_, count);
-      save_image(buff_[(buffIndex_ + 1) % 3], name);
-    }
-    fetch_thread.join();
-    detect_thread.join();
-    ++count;
-    if (!isNodeRunning()) {
-      demoDone_ = true;
+      fetch_thread.join();
+      detect_thread.join();
+      ++count;
+      if (!isNodeRunning()) {
+        demoDone_ = true;
+      }
+      isActionImage_ = false;
     }
   }
 
@@ -573,6 +578,12 @@ bool YoloObjectDetector::isNodeRunning(void)
 {
   boost::shared_lock<boost::shared_mutex> lock(mutexNodeStatus_);
   return isNodeRunning_;
+}
+
+bool YoloObjectDetector::isActionImage(void)
+{
+  //boost::shared_lock<boost::shared_mutex> lock(mutexNodeStatus_);
+  return isActionImage_;
 }
 
 void *YoloObjectDetector::publishInThread()
